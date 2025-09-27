@@ -23,8 +23,11 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // include organizationId in token payload so non-admins can have org derived from token
+    const tokenPayload = { id: user.id, role: user.role, organizationId: user.organizationId };
+
     // Use any-cast to avoid typing issues with different TS interop settings
-    const token = (jwt as any).sign({ id: user.id, role: user.role }, secretKey, { expiresIn });
+    const token = (jwt as any).sign(tokenPayload, secretKey, { expiresIn });
 
     // decode token to read expiry (exp is in seconds since epoch)
     const decoded = jwt.decode(token) as JwtPayload | null;
@@ -37,18 +40,29 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const register = async (req: Request, res: Response) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-      },
+    const user = await prisma.$transaction(async (prisma) => {
+      const organization = await prisma.organization.create({
+        data: {
+          name: `${name}'s Organization`,
+        },
+      });
+
+      const user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: 'ADMIN',
+          organizationId: organization.id,
+        },
+      });
+
+      return user;
     });
 
     res.status(201).json(user);
