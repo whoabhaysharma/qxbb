@@ -1,7 +1,10 @@
 import express from 'express';
 import { createApplication, getApplications, getApplicationById, updateApplication, deleteApplication } from '../controllers/applicationController';
+import { authenticateJWT } from '../middleware/authMiddleware';
 
 const router = express.Router();
+
+router.use(authenticateJWT);
 
 router.post('/', createApplication);
 router.get('/', getApplications);

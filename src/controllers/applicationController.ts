@@ -19,9 +19,9 @@ export const getApplications = async (_req: Request, res: Response) => {
   }
 };
 
-export const getApplicationById = async (req: Request, res: Response) => {
+export const getApplicationById = async (req: Request<{ id: string }>, res: Response) => {
   try {
-    const application = await prisma.application.findUnique({ where: { id: Number(req.params.id) } });
+    const application = await prisma.application.findUnique({ where: { id: req.params.id as string } });
     if (!application) return res.status(404).json({ error: 'Application not found' });
     res.status(200).json(application);
   } catch (error) {
@@ -29,10 +29,10 @@ export const getApplicationById = async (req: Request, res: Response) => {
   }
 };
 
-export const updateApplication = async (req: Request, res: Response) => {
+export const updateApplication = async (req: Request<{ id: string }>, res: Response) => {
   try {
     const application = await prisma.application.update({
-      where: { id: Number(req.params.id) },
+      where: { id: req.params.id as string },
       data: req.body,
     });
     res.status(200).json(application);
@@ -41,9 +41,9 @@ export const updateApplication = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteApplication = async (req: Request, res: Response) => {
+export const deleteApplication = async (req: Request<{ id: string }>, res: Response) => {
   try {
-    await prisma.application.delete({ where: { id: Number(req.params.id) } });
+    await prisma.application.delete({ where: { id: req.params.id as string } });
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete application' });

@@ -1,7 +1,10 @@
 import express from 'express';
 import { createJob, getJobs, getJobById, updateJob, deleteJob } from '../controllers/jobController';
+import { authenticateJWT } from '../middleware/authMiddleware';
 
 const router = express.Router();
+
+router.use(authenticateJWT);
 
 router.post('/', createJob);
 router.get('/', getJobs);

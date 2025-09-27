@@ -19,9 +19,9 @@ export const getUsers = async (_req: Request, res: Response) => {
   }
 };
 
-export const getUserById = async (req: Request, res: Response) => {
+export const getUserById = async (req: Request<{ id: string }>, res: Response) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: Number(req.params.id) } });
+    const user = await prisma.user.findUnique({ where: { id: req.params.id as string } });
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.status(200).json(user);
   } catch (error) {
@@ -29,10 +29,10 @@ export const getUserById = async (req: Request, res: Response) => {
   }
 };
 
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: Request<{ id: string }>, res: Response) => {
   try {
     const user = await prisma.user.update({
-      where: { id: Number(req.params.id) },
+      where: { id: req.params.id as string },
       data: req.body,
     });
     res.status(200).json(user);
@@ -41,9 +41,9 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = async (req: Request<{ id: string }>, res: Response) => {
   try {
-    await prisma.user.delete({ where: { id: Number(req.params.id) } });
+    await prisma.user.delete({ where: { id: req.params.id as string } });
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete user' });

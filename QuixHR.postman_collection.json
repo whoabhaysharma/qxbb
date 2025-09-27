@@ -1,0 +1,207 @@
+{
+  "info": {
+    "name": "QuixHR API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:3000/users", "host": ["http://localhost:3000"], "path": ["users"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"EMPLOYEE\"\n}" }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:3000/users", "host": ["http://localhost:3000"], "path": ["users"] }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:3000/users/:id", "host": ["http://localhost:3000"], "path": ["users", ":id"] }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:3000/users/:id", "host": ["http://localhost:3000"], "path": ["users", ":id"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Name\"\n}" }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "http://localhost:3000/users/:id", "host": ["http://localhost:3000"], "path": ["users", ":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        {
+          "name": "Create Job",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:3000/jobs", "host": ["http://localhost:3000"], "path": ["jobs"] },
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Software Engineer\",\n  \"description\": \"Develop and maintain software\",\n  \"location\": \"Remote\",\n  \"salary\": \"100000\"\n}" }
+          }
+        },
+        {
+          "name": "Get All Jobs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:3000/jobs", "host": ["http://localhost:3000"], "path": ["jobs"] }
+          }
+        },
+        {
+          "name": "Get Job by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:3000/jobs/:id", "host": ["http://localhost:3000"], "path": ["jobs", ":id"] }
+          }
+        },
+        {
+          "name": "Update Job",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:3000/jobs/:id", "host": ["http://localhost:3000"], "path": ["jobs", ":id"] },
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated Title\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Job",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "http://localhost:3000/jobs/:id", "host": ["http://localhost:3000"], "path": ["jobs", ":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Create Organization",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:3000/organizations", "host": ["http://localhost:3000"], "path": ["organizations"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Tech Corp\"\n}" }
+          }
+        },
+        {
+          "name": "Get All Organizations",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:3000/organizations", "host": ["http://localhost:3000"], "path": ["organizations"] }
+          }
+        },
+        {
+          "name": "Get Organization by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:3000/organizations/:id", "host": ["http://localhost:3000"], "path": ["organizations", ":id"] }
+          }
+        },
+        {
+          "name": "Update Organization",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:3000/organizations/:id", "host": ["http://localhost:3000"], "path": ["organizations", ":id"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Organization\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Organization",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "http://localhost:3000/organizations/:id", "host": ["http://localhost:3000"], "path": ["organizations", ":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Applications",
+      "item": [
+        {
+          "name": "Create Application",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:3000/applications", "host": ["http://localhost:3000"], "path": ["applications"] },
+            "body": { "mode": "raw", "raw": "{\n  \"jobId\": 1,\n  \"fullName\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"resumeUrl\": \"http://example.com/resume.pdf\"\n}" }
+          }
+        },
+        {
+          "name": "Get All Applications",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:3000/applications", "host": ["http://localhost:3000"], "path": ["applications"] }
+          }
+        },
+        {
+          "name": "Get Application by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:3000/applications/:id", "host": ["http://localhost:3000"], "path": ["applications", ":id"] }
+          }
+        },
+        {
+          "name": "Update Application",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:3000/applications/:id", "host": ["http://localhost:3000"], "path": ["applications", ":id"] },
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Updated Name\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Application",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "http://localhost:3000/applications/:id", "host": ["http://localhost:3000"], "path": ["applications", ":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:3000/api/auth/login", "host": ["http://localhost:3000"], "path": ["api", "auth", "login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}" }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:3000/api/auth/register", "host": ["http://localhost:3000"], "path": ["api", "auth", "register"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"EMPLOYEE\"\n}" }
+          }
+        }
+      ]
+    }
+  ]
+}

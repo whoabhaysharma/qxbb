@@ -1,7 +1,10 @@
 import express from 'express';
 import { createOrganization, getOrganizations, getOrganizationById, updateOrganization, deleteOrganization } from '../controllers/organizationController';
+import { authenticateJWT } from '../middleware/authMiddleware';
 
 const router = express.Router();
+
+router.use(authenticateJWT);
 
 router.post('/', createOrganization);
 router.get('/', getOrganizations);
