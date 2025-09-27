@@ -1,0 +1,75 @@
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ========================
+// Enums
+// ========================
+enum Role {
+  ADMIN
+  HR
+  EMPLOYEE
+}
+
+// ========================
+// Users Table (HR/Admin/Employee)
+// ========================
+model User {
+  id         Int       @id @default(autoincrement())
+  name       String
+  email      String    @unique
+  password   String
+  role       Role      @default(EMPLOYEE)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  jobsPosted Job[]     @relation("PostedJobs")
+  organizationId Int?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+}
+
+// ========================
+// Jobs Table
+// ========================
+model Job {
+  id           Int         @id @default(autoincrement())
+  title        String
+  description  String
+  location     String?
+  salary       String?
+  postedAt     DateTime    @default(now())
+  postedById   Int
+  postedBy     User        @relation("PostedJobs", fields: [postedById], references: [id])
+  applications Application[]
+  organizationId Int?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+}
+
+// ========================
+// Applications Table (applicants don't login)
+// ========================
+model Application {
+  id          Int       @id @default(autoincrement())
+  jobId       Int
+  job         Job       @relation(fields: [jobId], references: [id])
+  fullName    String
+  email       String
+  resumeUrl   String
+  appliedAt   DateTime  @default(now())
+}
+
+// ========================
+// Optional: Organizations / Departments for scalability
+// ========================
+model Organization {
+  id        Int      @id @default(autoincrement())
+  name      String
+  members   User[]
+  jobs      Job[]
+  createdAt DateTime @default(now())
+}
