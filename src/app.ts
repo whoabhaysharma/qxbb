@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import indexRouter from '@/routes/index';
 import userRoutes from './routes/userRoutes';
 import jobRoutes from './routes/jobRoutes';
@@ -11,6 +11,14 @@ const port = process.env.PORT || 3000;
 
 // Middleware to parse JSON
 app.use(express.json());
+
+// JSON parse error handler
+app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+  if (err && err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'Invalid JSON in request body' });
+  }
+  next(err);
+});
 
 // Routes
 app.use('/', indexRouter);
