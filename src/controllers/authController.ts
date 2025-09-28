@@ -3,6 +3,7 @@ import * as jwt from 'jsonwebtoken';
 import type { JwtPayload } from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import bcrypt from 'bcrypt';
+import logger from '../lib/logger';
 
 const secretKey = process.env.JWT_SECRET || 'default_secret_key';
 const expiresIn = process.env.JWT_EXPIRES_IN || '1h';
@@ -32,18 +33,18 @@ export const login = async (req: Request, res: Response) => {
       email: user.email,
     } as any;
 
-    // debug log to verify payload (remove in production)
-
     const token = (jwt as any).sign({ user: userClaim }, secretKey, { expiresIn });
 
     // decode token to read expiry (exp is in seconds since epoch)
     const decoded = jwt.decode(token) as JwtPayload | null;
     const expiresAt = decoded?.exp ? new Date(decoded.exp * 1000).toISOString() : null;
 
-    console.debug('Signing token with payload.user =', token, expiresAt);
+    logger.debug('Signing token', { userId: user.id, expiresAt });
+    logger.info('User logged in', { userId: user.id, email: user.email });
 
     res.status(200).json({ token, expiresAt });
   } catch (error) {
+    logger.error('Login error', { error });
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -89,11 +90,11 @@ export const register = async (req: Request, res: Response) => {
     // --- FIX ENDS HERE ---
 
   } catch (error: any) {
-    // This part is good, it correctly handles duplicate emails
-    if (error?.code === 'P2002') {
-      return res.status(409).json({ error: 'Email already in use' });
-    }
-    console.error('Registration Error:', error); // Use console.error for errors
-    res.status(500).json({ error: 'Internal server error' });
-  }
+   // This part is good, it correctly handles duplicate emails
+   if (error?.code === 'P2002') {
+     return res.status(409).json({ error: 'Email already in use' });
+   }
+    logger.error('Registration Error:', { error });
+     res.status(500).json({ error: 'Internal server error' });
+   }
 };

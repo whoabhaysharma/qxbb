@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import logger from '../lib/logger';
 
 declare global {
   namespace Express {
@@ -21,10 +22,14 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, secretKey);
-    req.user = decoded; // Attach decoded token payload to the request object
+    const decoded = jwt.verify(token, secretKey) as jwt.JwtPayload | string;
+    // token was signed with payload: { user: { ... } }
+    // normalize so handlers always see `req.user` as the user claim
+    const claim = typeof decoded === 'object' && decoded && (decoded as any).user ? (decoded as any).user : decoded;
+    req.user = claim; // Attach decoded token payload (user claim) to the request object
     next();
   } catch (error) {
+    logger.warn('Token verification failed', { error });
     return res.status(403).json({ error: 'Forbidden: Invalid token' });
   }
 };

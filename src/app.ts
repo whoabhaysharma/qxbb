@@ -5,6 +5,7 @@ import jobRoutes from './routes/jobRoutes';
 import organizationRoutes from './routes/organizationRoutes';
 import applicationRoutes from './routes/applicationRoutes';
 import authRoutes from './routes/authRoutes';
+import logger from './lib/logger';
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
@@ -29,5 +30,5 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/auth', authRoutes);
 
 app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+  logger.info(`Server is running at http://localhost:${port}`);
 });

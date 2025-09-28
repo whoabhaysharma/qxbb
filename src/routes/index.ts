@@ -12,7 +12,8 @@ router.get('/users', async (req: Request, res: Response) => {
     const users = await prisma.user.findMany();
     res.json(users);
   } catch (err) {
-    console.error(err);
+    const logger = (await import('../lib/logger')).default;
+    logger.error('Error fetching users', { error: err });
     res.status(500).send('Error fetching users');
   }
 });
