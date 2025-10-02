@@ -11,8 +11,11 @@
           "name": "Create User",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "http://localhost:3000/users", "host": ["http://localhost:3000"], "path": ["users"] },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+            ],
+            "url": { "raw": "http://localhost:3000/api/users", "host": ["http://localhost:3000"], "path": ["api","users"] },
             "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"EMPLOYEE\"\n}" }
           }
         },
@@ -20,22 +23,27 @@
           "name": "Get All Users",
           "request": {
             "method": "GET",
-            "url": { "raw": "http://localhost:3000/users", "host": ["http://localhost:3000"], "path": ["users"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/users", "host": ["http://localhost:3000"], "path": ["api","users"] }
           }
         },
         {
           "name": "Get User by ID",
           "request": {
             "method": "GET",
-            "url": { "raw": "http://localhost:3000/users/:id", "host": ["http://localhost:3000"], "path": ["users", ":id"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/users/:id", "host": ["http://localhost:3000"], "path": ["api","users",":id"] }
           }
         },
         {
           "name": "Update User",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "http://localhost:3000/users/:id", "host": ["http://localhost:3000"], "path": ["users", ":id"] },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+            ],
+            "url": { "raw": "http://localhost:3000/api/users/:id", "host": ["http://localhost:3000"], "path": ["api","users",":id"] },
             "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Name\"\n}" }
           }
         },
@@ -43,7 +51,8 @@
           "name": "Delete User",
           "request": {
             "method": "DELETE",
-            "url": { "raw": "http://localhost:3000/users/:id", "host": ["http://localhost:3000"], "path": ["users", ":id"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/users/:id", "host": ["http://localhost:3000"], "path": ["api","users",":id"] }
           }
         }
       ]
@@ -55,8 +64,11 @@
           "name": "Create Job",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "http://localhost:3000/jobs", "host": ["http://localhost:3000"], "path": ["jobs"] },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+            ],
+            "url": { "raw": "http://localhost:3000/api/jobs", "host": ["http://localhost:3000"], "path": ["api","jobs"] },
             "body": { "mode": "raw", "raw": "{\n  \"title\": \"Software Engineer\",\n  \"description\": \"Develop and maintain software\",\n  \"location\": \"Remote\",\n  \"salary\": \"100000\"\n}" }
           }
         },
@@ -64,22 +76,27 @@
           "name": "Get All Jobs",
           "request": {
             "method": "GET",
-            "url": { "raw": "http://localhost:3000/jobs", "host": ["http://localhost:3000"], "path": ["jobs"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/jobs", "host": ["http://localhost:3000"], "path": ["api","jobs"] }
           }
         },
         {
           "name": "Get Job by ID",
           "request": {
             "method": "GET",
-            "url": { "raw": "http://localhost:3000/jobs/:id", "host": ["http://localhost:3000"], "path": ["jobs", ":id"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/jobs/:id", "host": ["http://localhost:3000"], "path": ["api","jobs",":id"] }
           }
         },
         {
           "name": "Update Job",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "http://localhost:3000/jobs/:id", "host": ["http://localhost:3000"], "path": ["jobs", ":id"] },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+            ],
+            "url": { "raw": "http://localhost:3000/api/jobs/:id", "host": ["http://localhost:3000"], "path": ["api","jobs",":id"] },
             "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated Title\"\n}" }
           }
         },
@@ -87,7 +104,8 @@
           "name": "Delete Job",
           "request": {
             "method": "DELETE",
-            "url": { "raw": "http://localhost:3000/jobs/:id", "host": ["http://localhost:3000"], "path": ["jobs", ":id"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/jobs/:id", "host": ["http://localhost:3000"], "path": ["api","jobs",":id"] }
           }
         }
       ]
@@ -96,42 +114,51 @@
       "name": "Organizations",
       "item": [
         {
-          "name": "Create Organization",
+          "name": "Create Organization (disabled — created at signup)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "http://localhost:3000/organizations", "host": ["http://localhost:3000"], "path": ["organizations"] },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+            ],
+            "url": { "raw": "http://localhost:3000/api/organizations", "host": ["http://localhost:3000"], "path": ["api","organizations"] },
             "body": { "mode": "raw", "raw": "{\n  \"name\": \"Tech Corp\"\n}" }
           }
         },
         {
-          "name": "Get All Organizations",
+          "name": "Get My Organization",
           "request": {
             "method": "GET",
-            "url": { "raw": "http://localhost:3000/organizations", "host": ["http://localhost:3000"], "path": ["organizations"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/organizations", "host": ["http://localhost:3000"], "path": ["api","organizations"] }
           }
         },
         {
           "name": "Get Organization by ID",
           "request": {
             "method": "GET",
-            "url": { "raw": "http://localhost:3000/organizations/:id", "host": ["http://localhost:3000"], "path": ["organizations", ":id"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/organizations/:id", "host": ["http://localhost:3000"], "path": ["api","organizations",":id"] }
           }
         },
         {
-          "name": "Update Organization",
+          "name": "Update Organization (ADMIN only)",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "http://localhost:3000/organizations/:id", "host": ["http://localhost:3000"], "path": ["organizations", ":id"] },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+            ],
+            "url": { "raw": "http://localhost:3000/api/organizations/:id", "host": ["http://localhost:3000"], "path": ["api","organizations",":id"] },
             "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Organization\"\n}" }
           }
         },
         {
-          "name": "Delete Organization",
+          "name": "Delete Organization (disabled)",
           "request": {
             "method": "DELETE",
-            "url": { "raw": "http://localhost:3000/organizations/:id", "host": ["http://localhost:3000"], "path": ["organizations", ":id"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/organizations/:id", "host": ["http://localhost:3000"], "path": ["api","organizations",":id"] }
           }
         }
       ]
@@ -143,31 +170,39 @@
           "name": "Create Application",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "http://localhost:3000/applications", "host": ["http://localhost:3000"], "path": ["applications"] },
-            "body": { "mode": "raw", "raw": "{\n  \"jobId\": 1,\n  \"fullName\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"resumeUrl\": \"http://example.com/resume.pdf\"\n}" }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+            ],
+            "url": { "raw": "http://localhost:3000/api/applications", "host": ["http://localhost:3000"], "path": ["api","applications"] },
+            "body": { "mode": "raw", "raw": "{\n  \"jobId\": \"<job-uuid>\",\n  \"fullName\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"resumeUrl\": \"http://example.com/resume.pdf\"\n}" }
           }
         },
         {
           "name": "Get All Applications",
           "request": {
             "method": "GET",
-            "url": { "raw": "http://localhost:3000/applications", "host": ["http://localhost:3000"], "path": ["applications"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/applications", "host": ["http://localhost:3000"], "path": ["api","applications"] }
           }
         },
         {
           "name": "Get Application by ID",
           "request": {
             "method": "GET",
-            "url": { "raw": "http://localhost:3000/applications/:id", "host": ["http://localhost:3000"], "path": ["applications", ":id"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/applications/:id", "host": ["http://localhost:3000"], "path": ["api","applications",":id"] }
           }
         },
         {
           "name": "Update Application",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "http://localhost:3000/applications/:id", "host": ["http://localhost:3000"], "path": ["applications", ":id"] },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+            ],
+            "url": { "raw": "http://localhost:3000/api/applications/:id", "host": ["http://localhost:3000"], "path": ["api","applications",":id"] },
             "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Updated Name\"\n}" }
           }
         },
@@ -175,7 +210,8 @@
           "name": "Delete Application",
           "request": {
             "method": "DELETE",
-            "url": { "raw": "http://localhost:3000/applications/:id", "host": ["http://localhost:3000"], "path": ["applications", ":id"] }
+            "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
+            "url": { "raw": "http://localhost:3000/api/applications/:id", "host": ["http://localhost:3000"], "path": ["api","applications",":id"] }
           }
         }
       ]

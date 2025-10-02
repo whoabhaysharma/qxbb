@@ -46,9 +46,15 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getUsers = async (_req: Request, res: Response) => {
+export const getUsers = async (req: Request, res: Response) => {
   try {
-    const users = await prisma.user.findMany();
+    const actor = (req as any).user as any;
+    if (!actor?.organizationId) {
+      logger.warn('getUsers: missing organizationId on token', { actorId: actor?.id });
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const users = await prisma.user.findMany({ where: { organizationId: actor.organizationId } });
     res.status(200).json(users);
   } catch (error) {
     logger.error('Failed to fetch users', { error });
@@ -58,8 +64,15 @@ export const getUsers = async (_req: Request, res: Response) => {
 
 export const getUserById = async (req: Request<{ id: string }>, res: Response) => {
   try {
+    const actor = (req as any).user as any;
+    if (!actor?.organizationId) return res.status(401).json({ error: 'Unauthorized' });
+
     const user = await prisma.user.findUnique({ where: { id: req.params.id as string } });
     if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.organizationId !== actor.organizationId) {
+      logger.warn('getUserById: cross-organization access denied', { actorId: actor?.id, targetUserId: user.id });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     res.status(200).json(user);
   } catch (error) {
     logger.error('Failed to fetch user', { error });
@@ -69,10 +82,22 @@ export const getUserById = async (req: Request<{ id: string }>, res: Response) =
 
 export const updateUser = async (req: Request<{ id: string }>, res: Response) => {
   try {
-    const user = await prisma.user.update({
-      where: { id: req.params.id as string },
-      data: req.body,
-    });
+    const actor = (req as any).user as any;
+    if (!actor?.organizationId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const existing = await prisma.user.findUnique({ where: { id: req.params.id as string } });
+    if (!existing) return res.status(404).json({ error: 'User not found' });
+    if (existing.organizationId !== actor.organizationId) {
+      logger.warn('updateUser: cross-organization update denied', { actorId: actor?.id, targetUserId: existing.id });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    // prevent moving users between organizations via this endpoint
+    if (req.body.organizationId && req.body.organizationId !== existing.organizationId) {
+      return res.status(400).json({ error: 'Cannot change organizationId' });
+    }
+
+    const user = await prisma.user.update({ where: { id: existing.id }, data: req.body });
     res.status(200).json(user);
   } catch (error) {
     logger.error('Failed to update user', { error });
@@ -82,7 +107,17 @@ export const updateUser = async (req: Request<{ id: string }>, res: Response) =>
 
 export const deleteUser = async (req: Request<{ id: string }>, res: Response) => {
   try {
-    await prisma.user.delete({ where: { id: req.params.id as string } });
+    const actor = (req as any).user as any;
+    if (!actor?.organizationId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const existing = await prisma.user.findUnique({ where: { id: req.params.id as string } });
+    if (!existing) return res.status(404).json({ error: 'User not found' });
+    if (existing.organizationId !== actor.organizationId) {
+      logger.warn('deleteUser: cross-organization delete denied', { actorId: actor?.id, targetUserId: existing.id });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    await prisma.user.delete({ where: { id: existing.id } });
     res.status(204).send();
   } catch (error) {
     logger.error('Failed to delete user', { error });
