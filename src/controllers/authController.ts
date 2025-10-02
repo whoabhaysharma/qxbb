@@ -1,163 +1,170 @@
 import { Request, Response } from 'express';
-import * as jwt from 'jsonwebtoken';
-import type { JwtPayload } from 'jsonwebtoken';
+import { decode, JwtPayload } from 'jsonwebtoken';
 import prisma from '../lib/prisma';
-import bcrypt from 'bcrypt';
 import logger from '../lib/logger';
-import redisClient from '../lib/redis';
 import { sendVerificationEmail } from '../lib/email';
+import {
+  generateOTP,
+  hashPassword,
+  redisKeyFor,
+  readSession,
+  saveSession,
+  deleteSession,
+  signToken,
+} from '../lib/authHelpers';
+import bcrypt from 'bcrypt';
 
-const secretKey = process.env.JWT_SECRET || 'default_secret_key';
-const expiresIn = process.env.JWT_EXPIRES_IN || '1h';
+// load resend settings from env (kept local to controller)
+const OTP_RESEND_COOLDOWN_S = parseInt(process.env.OTP_RESEND_COOLDOWN_S || '60', 10); // 60s
+const OTP_MAX_RESENDS = parseInt(process.env.OTP_MAX_RESENDS || '3', 10);
 
-// Function to generate OTP
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
+// Controllers
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(401).json({ error: 'Invalid email or password' });
 
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    // include user information in token payload under `user` to avoid any claim filtering
     const userClaim = {
       id: user.id,
       role: user.role,
       organizationId: user.organizationId,
       name: user.name,
       email: user.email,
-    } as any;
+    };
 
-    const token = (jwt as any).sign({ user: userClaim }, secretKey, { expiresIn });
-
-    // decode token to read expiry (exp is in seconds since epoch)
-    const decoded = jwt.decode(token) as JwtPayload | null;
+    const token = signToken({ user: userClaim });
+    const decoded = decode(token) as JwtPayload | null;
     const expiresAt = decoded?.exp ? new Date(decoded.exp * 1000).toISOString() : null;
 
-    logger.debug('Signing token', { userId: user.id, expiresAt });
     logger.info('User logged in', { userId: user.id, email: user.email });
-
     res.status(200).json({ token, expiresAt });
-  } catch (error) {
-    logger.error('Login error', { error });
+  } catch (err) {
+    logger.error('Login error', { error: err instanceof Error ? err.stack : err });
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
+  if (!name || !email || !password) return res.status(400).json({ error: 'name, email and password are required' });
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'name, email and password are required' });
-  }
+  const key = redisKeyFor(email);
 
   try {
-    // Check if email already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
+    // If user exists in DB, clear any stale session and return conflict
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      await deleteSession(key);
       return res.status(409).json({ error: 'Email already in use' });
     }
 
-    // Generate OTP
-    const otp = generateOTP();
-    
-    // Store registration data and OTP in Redis with 10 minutes expiry
-    const registrationData = {
+    const session = await readSession(key);
+    const newPasswordHash = await hashPassword(password);
+
+    if (session) {
+      // enforce cooldown and max resends
+      if (session.attempts >= OTP_MAX_RESENDS) {
+        logger.warn('OTP resend limit reached', { email, attempts: session.attempts });
+        return res.status(429).json({ error: 'Too many OTP requests. Please contact support or try again later.' });
+      }
+
+      const secondsSinceLast = Math.floor((Date.now() - session.lastSent) / 1000);
+      if (secondsSinceLast < OTP_RESEND_COOLDOWN_S) {
+        const wait = OTP_RESEND_COOLDOWN_S - secondsSinceLast;
+        return res.status(429).json({ error: `Please wait ${wait} seconds before requesting a new code.` });
+      }
+
+      // Update session with new OTP and latest password hash
+      session.otp = generateOTP();
+      session.attempts = session.attempts + 1;
+      session.lastSent = Date.now();
+      session.passwordHash = newPasswordHash;
+
+      await saveSession(key, session);
+      await sendVerificationEmail(email, session.otp);
+
+      logger.info('OTP resent', { email, attempts: session.attempts });
+      return res.status(200).json({ message: 'Verification code resent. Please check your email.' });
+    }
+
+    // No existing session – create one
+    const newSession = {
       name,
       email,
-      password,
-      otp,
+      passwordHash: newPasswordHash,
+      otp: generateOTP(),
+      attempts: 1,
+      lastSent: Date.now(),
     };
-    
-    await redisClient.setEx(
-      `registration:${email}`, 
-      600, // 10 minutes
-      JSON.stringify(registrationData)
-    );
 
-    // Send OTP via email
-    await sendVerificationEmail(email, otp);
+    await saveSession(key, newSession);
+    await sendVerificationEmail(email, newSession.otp);
 
-    res.status(200).json({ 
-      message: 'Registration initiated. Please check your email for verification code.',
-      email 
-    });
-
-  } catch (error) {
-    logger.error('Registration Error:', { error });
+    logger.info('Registration initiated', { email });
+    return res.status(200).json({ message: 'Registration initiated. Please check your email for verification code.', email });
+  } catch (err) {
+    logger.error('Registration Error', { error: err instanceof Error ? err.stack : err });
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
 export const verifyEmail = async (req: Request, res: Response) => {
   const { email, otp } = req.body;
+  if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required' });
 
-  if (!email || !otp) {
-    return res.status(400).json({ error: 'Email and OTP are required' });
-  }
+  const key = redisKeyFor(email);
 
   try {
-    // Get registration data from Redis
-    const registrationDataStr = await redisClient.get(`registration:${email}`);
-    
-    if (!registrationDataStr) {
-      return res.status(400).json({ error: 'Registration session expired or invalid' });
+    const session = await readSession(key);
+    if (!session) return res.status(400).json({ error: 'Registration session expired or invalid' });
+
+    const providedOtp = String(otp).trim();
+    if (session.otp !== providedOtp) return res.status(400).json({ error: 'Invalid OTP' });
+
+    // Double-check user does not already exist
+    const exists = await prisma.user.findUnique({ where: { email } });
+    if (exists) {
+      await deleteSession(key);
+      return res.status(409).json({ error: 'Email already in use' });
     }
 
-    const registrationData = JSON.parse(registrationDataStr);
+    // Create organization + user in a transaction, handle unique-constraint race
+    try {
+      const created = await prisma.$transaction(async (tx) => {
+        const organization = await tx.organization.create({ data: { name: `${session.name}'s Organization` } });
+        const user = await tx.user.create({
+          data: {
+            name: session.name,
+            email: session.email,
+            password: session.passwordHash,
+            role: 'ADMIN',
+            organizationId: organization.id,
+          },
+        });
+        return user;
+      });
 
-    if (registrationData.otp !== otp) {
-      return res.status(400).json({ error: 'Invalid OTP' });
+      await deleteSession(key);
+
+      const { password: _p, ...safeUser } = created as any;
+      return res.status(201).json({ message: 'Registration completed successfully', user: safeUser });
+    } catch (err: any) {
+      // Prisma unique constraint error code (P2002)
+      if (err && err.code === 'P2002') {
+        logger.warn('Race: email already created during verification', { email, err });
+        await deleteSession(key);
+        return res.status(409).json({ error: 'Email already in use' });
+      }
+      throw err;
     }
-
-    const hashedPassword = await bcrypt.hash(registrationData.password, 10);
-
-    // Create user and organization in transaction
-    const newUser = await prisma.$transaction(async (prisma) => {
-      const organization = await prisma.organization.create({
-        data: {
-          name: `${registrationData.name}'s Organization`,
-        },
-      });
-
-      const user = await prisma.user.create({
-        data: {
-          name: registrationData.name,
-          email: registrationData.email,
-          password: hashedPassword,
-          role: 'ADMIN',
-          organizationId: organization.id,
-        },
-      });
-
-      return user;
-    });
-
-    // Delete registration data from Redis
-    await redisClient.del(`registration:${email}`);
-
-    // Omit the password from the user object for security
-    const { password: _p, ...safeUser } = newUser;
-
-    res.status(201).json({ 
-      message: 'Registration completed successfully',
-      user: safeUser 
-    });
-
-  } catch (error) {
-    logger.error('Verification Error:', { error });
+  } catch (err) {
+    logger.error('Verification Error', { error: err instanceof Error ? err.stack : err });
     res.status(500).json({ error: 'Internal server error' });
   }
 };

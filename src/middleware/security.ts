@@ -1,6 +1,7 @@
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import cors from 'cors';
+import { Request } from 'express';
 
 // ---------------------------
 // CORS Configuration
@@ -16,6 +17,11 @@ const corsOptions = {
   credentials: true, // allow cookies if needed
 };
 
+// Helper to extract an IP string (prefer X-Forwarded-For), used with ipKeyGenerator
+const extractIpString = (req: Request): string => {
+  return (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || (req.ip as string) || '0.0.0.0';
+};
+
 // ---------------------------
 // Rate Limiters
 // ---------------------------
@@ -25,6 +31,12 @@ const globalLimiter = rateLimit({
   windowMs: parseInt(process.env.GLOBAL_RATE_LIMIT_WINDOW_S || '900') * 1000, // Default: 15 minutes
   max: parseInt(process.env.GLOBAL_RATE_LIMIT_MAX || '100'), // Default: 100 requests per IP
   message: { error: 'Too many requests, please try again later.' },
+  keyGenerator: (req: Request) => {
+    const ip = extractIpString(req);
+    return ipKeyGenerator(ip);
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Stricter limiter for auth routes (login/signup)
@@ -32,7 +44,13 @@ export const authLimiter = rateLimit({
   windowMs: parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_S || '3600') * 1000, // Default: 1 hour
   max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10'), // Default: 10 requests per IP per hour
   message: { error: 'Too many authentication attempts, try again after an hour.' },
-  keyGenerator: (req) => req.ip + (req.body.email ? `:${req.body.email}` : ''),
+  keyGenerator: (req: Request) => {
+    const ip = extractIpString(req);
+    const normalized = ipKeyGenerator(ip);
+    return `${normalized}:${req.body?.email || 'anonymous'}`;
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
 // ---------------------------
