@@ -1,12 +1,8 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
-import indexRouter from '@/routes/index';
-import userRoutes from './routes/userRoutes';
-import jobRoutes from './routes/jobRoutes';
-import organizationRoutes from './routes/organizationRoutes';
-import applicationRoutes from './routes/applicationRoutes';
-import authRoutes from './routes/authRoutes';
+import router from './routes/index';
 import logger from './lib/logger';
 import { securityMiddleware } from './middleware/security';
+import { connectPrisma } from './lib/prisma';
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
@@ -26,19 +22,22 @@ app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
 });
 
 // Routes
-app.use('/', indexRouter);
-app.use('/api/users', userRoutes);
-app.use('/api/jobs', jobRoutes);
-app.use('/api/organizations', organizationRoutes);
-app.use('/api/applications', applicationRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/', router);
 
 // Global error handler
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  logger.error('Unhandled error:', { error: err });
+  logger.error('Unhandled error:', { error: err instanceof Error ? err.stack : err });
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(port, () => {
-  logger.info(`Server is running at http://localhost:${port}`);
-});
+// Start server after connecting to DB
+connectPrisma()
+  .then(() => {
+    app.listen(port, () => {
+      logger.info(`Server is running at http://localhost:${port}`);
+    });
+  })
+  .catch((err) => {
+    logger.error('Failed to start server', { error: err instanceof Error ? err.stack : err });
+    process.exit(1);
+  });
