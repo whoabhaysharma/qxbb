@@ -3,6 +3,16 @@
     "name": "QuixHR API Collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "TOKEN",
+      "value": ""
+    }
+  ],
   "item": [
     {
       "name": "Users",
@@ -15,7 +25,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
             ],
-            "url": { "raw": "http://localhost:3000/api/users", "host": ["http://localhost:3000"], "path": ["api","users"] },
+            "url": { "raw": "{{BASE_URL}}/api/users", "host": ["{{BASE_URL}}"], "path": ["api","users"] },
             "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"EMPLOYEE\"\n}" }
           }
         },
@@ -24,7 +34,7 @@
           "request": {
             "method": "GET",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/users", "host": ["http://localhost:3000"], "path": ["api","users"] }
+            "url": { "raw": "{{BASE_URL}}/api/users", "host": ["{{BASE_URL}}"], "path": ["api","users"] }
           }
         },
         {
@@ -32,7 +42,7 @@
           "request": {
             "method": "GET",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/users/:id", "host": ["http://localhost:3000"], "path": ["api","users",":id"] }
+            "url": { "raw": "{{BASE_URL}}/api/users/:id", "host": ["{{BASE_URL}}"], "path": ["api","users",":id"] }
           }
         },
         {
@@ -43,7 +53,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
             ],
-            "url": { "raw": "http://localhost:3000/api/users/:id", "host": ["http://localhost:3000"], "path": ["api","users",":id"] },
+            "url": { "raw": "{{BASE_URL}}/api/users/:id", "host": ["{{BASE_URL}}"], "path": ["api","users",":id"] },
             "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Name\"\n}" }
           }
         },
@@ -52,7 +62,7 @@
           "request": {
             "method": "DELETE",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/users/:id", "host": ["http://localhost:3000"], "path": ["api","users",":id"] }
+            "url": { "raw": "{{BASE_URL}}/api/users/:id", "host": ["{{BASE_URL}}"], "path": ["api","users",":id"] }
           }
         }
       ]
@@ -68,7 +78,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
             ],
-            "url": { "raw": "http://localhost:3000/api/jobs", "host": ["http://localhost:3000"], "path": ["api","jobs"] },
+            "url": { "raw": "{{BASE_URL}}/api/jobs", "host": ["{{BASE_URL}}"], "path": ["api","jobs"] },
             "body": { "mode": "raw", "raw": "{\n  \"title\": \"Software Engineer\",\n  \"description\": \"Develop and maintain software\",\n  \"location\": \"Remote\",\n  \"salary\": \"100000\"\n}" }
           }
         },
@@ -77,7 +87,7 @@
           "request": {
             "method": "GET",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/jobs", "host": ["http://localhost:3000"], "path": ["api","jobs"] }
+            "url": { "raw": "{{BASE_URL}}/api/jobs", "host": ["{{BASE_URL}}"], "path": ["api","jobs"] }
           }
         },
         {
@@ -85,7 +95,7 @@
           "request": {
             "method": "GET",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/jobs/:id", "host": ["http://localhost:3000"], "path": ["api","jobs",":id"] }
+            "url": { "raw": "{{BASE_URL}}/api/jobs/:id", "host": ["{{BASE_URL}}"], "path": ["api","jobs",":id"] }
           }
         },
         {
@@ -96,7 +106,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
             ],
-            "url": { "raw": "http://localhost:3000/api/jobs/:id", "host": ["http://localhost:3000"], "path": ["api","jobs",":id"] },
+            "url": { "raw": "{{BASE_URL}}/api/jobs/:id", "host": ["{{BASE_URL}}"], "path": ["api","jobs",":id"] },
             "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated Title\"\n}" }
           }
         },
@@ -105,7 +115,7 @@
           "request": {
             "method": "DELETE",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/jobs/:id", "host": ["http://localhost:3000"], "path": ["api","jobs",":id"] }
+            "url": { "raw": "{{BASE_URL}}/api/jobs/:id", "host": ["{{BASE_URL}}"], "path": ["api","jobs",":id"] }
           }
         }
       ]
@@ -121,7 +131,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
             ],
-            "url": { "raw": "http://localhost:3000/api/organizations", "host": ["http://localhost:3000"], "path": ["api","organizations"] },
+            "url": { "raw": "{{BASE_URL}}/api/organizations", "host": ["{{BASE_URL}}"], "path": ["api","organizations"] },
             "body": { "mode": "raw", "raw": "{\n  \"name\": \"Tech Corp\"\n}" }
           }
         },
@@ -130,7 +140,7 @@
           "request": {
             "method": "GET",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/organizations", "host": ["http://localhost:3000"], "path": ["api","organizations"] }
+            "url": { "raw": "{{BASE_URL}}/api/organizations", "host": ["{{BASE_URL}}"], "path": ["api","organizations"] }
           }
         },
         {
@@ -138,7 +148,7 @@
           "request": {
             "method": "GET",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/organizations/:id", "host": ["http://localhost:3000"], "path": ["api","organizations",":id"] }
+            "url": { "raw": "{{BASE_URL}}/api/organizations/:id", "host": ["{{BASE_URL}}"], "path": ["api","organizations",":id"] }
           }
         },
         {
@@ -149,7 +159,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
             ],
-            "url": { "raw": "http://localhost:3000/api/organizations/:id", "host": ["http://localhost:3000"], "path": ["api","organizations",":id"] },
+            "url": { "raw": "{{BASE_URL}}/api/organizations/:id", "host": ["{{BASE_URL}}"], "path": ["api","organizations",":id"] },
             "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Organization\"\n}" }
           }
         },
@@ -158,7 +168,7 @@
           "request": {
             "method": "DELETE",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/organizations/:id", "host": ["http://localhost:3000"], "path": ["api","organizations",":id"] }
+            "url": { "raw": "{{BASE_URL}}/api/organizations/:id", "host": ["{{BASE_URL}}"], "path": ["api","organizations",":id"] }
           }
         }
       ]
@@ -174,7 +184,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
             ],
-            "url": { "raw": "http://localhost:3000/api/applications", "host": ["http://localhost:3000"], "path": ["api","applications"] },
+            "url": { "raw": "{{BASE_URL}}/api/applications", "host": ["{{BASE_URL}}"], "path": ["api","applications"] },
             "body": { "mode": "raw", "raw": "{\n  \"jobId\": \"<job-uuid>\",\n  \"fullName\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"resumeUrl\": \"http://example.com/resume.pdf\"\n}" }
           }
         },
@@ -183,7 +193,7 @@
           "request": {
             "method": "GET",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/applications", "host": ["http://localhost:3000"], "path": ["api","applications"] }
+            "url": { "raw": "{{BASE_URL}}/api/applications", "host": ["{{BASE_URL}}"], "path": ["api","applications"] }
           }
         },
         {
@@ -191,7 +201,7 @@
           "request": {
             "method": "GET",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/applications/:id", "host": ["http://localhost:3000"], "path": ["api","applications",":id"] }
+            "url": { "raw": "{{BASE_URL}}/api/applications/:id", "host": ["{{BASE_URL}}"], "path": ["api","applications",":id"] }
           }
         },
         {
@@ -202,7 +212,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
             ],
-            "url": { "raw": "http://localhost:3000/api/applications/:id", "host": ["http://localhost:3000"], "path": ["api","applications",":id"] },
+            "url": { "raw": "{{BASE_URL}}/api/applications/:id", "host": ["{{BASE_URL}}"], "path": ["api","applications",":id"] },
             "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Updated Name\"\n}" }
           }
         },
@@ -211,30 +221,59 @@
           "request": {
             "method": "DELETE",
             "header": [ { "key": "Authorization", "value": "Bearer {{TOKEN}}" } ],
-            "url": { "raw": "http://localhost:3000/api/applications/:id", "host": ["http://localhost:3000"], "path": ["api","applications",":id"] }
+            "url": { "raw": "{{BASE_URL}}/api/applications/:id", "host": ["{{BASE_URL}}"], "path": ["api","applications",":id"] }
           }
         }
       ]
     },
     {
       "name": "Authentication",
+      "description": "Authentication endpoints including two-step registration process with email verification",
       "item": [
         {
           "name": "Login",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "http://localhost:3000/api/auth/login", "host": ["http://localhost:3000"], "path": ["api", "auth", "login"] },
+            "url": { "raw": "{{BASE_URL}}/api/auth/login", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "login"] },
             "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}" }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const response = pm.response.json();",
+                  "  pm.environment.set('TOKEN', response.token);",
+                  "  console.log('Token saved to environment:', response.token);",
+                  "} else {",
+                  "  console.error('Login failed:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
-          "name": "Register",
+          "name": "Register - Step 1: Initialize",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "http://localhost:3000/api/auth/register", "host": ["http://localhost:3000"], "path": ["api", "auth", "register"] },
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"EMPLOYEE\"\n}" }
+            "url": { "raw": "{{BASE_URL}}/api/auth/register", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "register"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}" },
+            "description": "Initiates the registration process. An OTP will be sent to the provided email address."
+          }
+        },
+        {
+          "name": "Register - Step 2: Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{BASE_URL}}/api/auth/verify-email", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "verify-email"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"john@example.com\",\n  \"otp\": \"123456\"\n}" },
+            "description": "Completes the registration process by verifying the OTP sent to the email address."
           }
         }
       ]
