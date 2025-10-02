@@ -6,9 +6,13 @@ import organizationRoutes from './routes/organizationRoutes';
 import applicationRoutes from './routes/applicationRoutes';
 import authRoutes from './routes/authRoutes';
 import logger from './lib/logger';
+import { securityMiddleware } from './middleware/security';
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
+
+// Apply security middleware
+app.use(securityMiddleware);
 
 // Middleware to parse JSON
 app.use(express.json());
@@ -28,6 +32,12 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/organizations', organizationRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/auth', authRoutes);
+
+// Global error handler
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  logger.error('Unhandled error:', { error: err });
+  res.status(500).json({ error: 'Internal server error' });
+});
 
 app.listen(port, () => {
   logger.info(`Server is running at http://localhost:${port}`);
