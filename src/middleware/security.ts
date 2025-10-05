@@ -47,10 +47,16 @@ export const authLimiter = rateLimit({
   keyGenerator: (req: Request) => {
     const ip = extractIpString(req);
     const normalized = ipKeyGenerator(ip);
-    return `${normalized}:${req.body?.email || 'anonymous'}`;
+    const email = req.body?.email || 'anonymous';
+    console.log(`[authLimiter] IP: ${ip}, Normalized: ${normalized}, Email: ${email}`);
+    return `${normalized}:${email}`;
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  handler: (req, res, next, options) => {
+    console.warn(`[authLimiter] Rate limit exceeded for IP: ${extractIpString(req)}, Email: ${req.body?.email || 'anonymous'}`);
+    res.status(options.statusCode).json(options.message);
+  }
 });
 
 // ---------------------------
