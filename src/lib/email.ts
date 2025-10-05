@@ -33,4 +33,26 @@ export const sendVerificationEmail = async (email: string, otp: string) => {
   }
 };
 
+export const sendPasswordResetEmail = async (email: string, otp: string) => {
+  try {
+    const mailOptions = {
+      from: process.env.SMTP_FROM || 'noreply@quixhr.com',
+      to: email,
+      subject: 'Password Reset - QuixHR',
+      html: `
+        <h1>Password Reset Request</h1>
+        <p>Your password reset code is: <strong>${otp}</strong></p>
+        <p>This code will expire in 10 minutes.</p>
+        <p>If you didn't request this password reset, please ignore this email and ensure your account is secure.</p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    logger.info('Password reset email sent', { email });
+  } catch (error) {
+    logger.error('Error sending password reset email', { error, email });
+    throw error;
+  }
+};
+
 export default transporter;
