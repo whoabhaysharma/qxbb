@@ -27,14 +27,26 @@ const resetKeyFor = (email: string) => `${RESET_KEY_PREFIX}${email}`;
 // Controllers
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
+  logger.debug('Login request received', { email });
+  if (!email || !password) {
+    logger.warn('Login request missing email or password', { email });
+    return res.status(400).json({ error: 'email and password are required' });
+  }
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(401).json({ error: 'Invalid email or password' });
+    logger.debug('User fetched for login', { email, userExists: !!user });
+    if (!user) {
+      logger.warn('Invalid login attempt: user not found', { email });
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
     const ok = await bcrypt.compare(password, user.password);
-    if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
+    logger.debug('Password comparison result', { email, result: ok });
+    if (!ok) {
+      logger.warn('Invalid login attempt: incorrect password', { email });
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
     const userClaim = {
       id: user.id,
@@ -48,7 +60,7 @@ export const login = async (req: Request, res: Response) => {
     const decoded = decode(token) as JwtPayload | null;
     const expiresAt = decoded?.exp ? new Date(decoded.exp * 1000).toISOString() : null;
 
-    logger.info('User logged in', { userId: user.id, email: user.email });
+    logger.info('User logged in successfully', { userId: user.id, email: user.email });
     res.status(200).json({ token, expiresAt });
   } catch (err) {
     logger.error('Login error', { error: err instanceof Error ? err.stack : err });
@@ -58,31 +70,38 @@ export const login = async (req: Request, res: Response) => {
 
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
-  if (!name || !email || !password) return res.status(400).json({ error: 'name, email and password are required' });
+  logger.debug('Registration request received', { email });
+  if (!name || !email || !password) {
+    logger.warn('Registration request missing required fields', { email });
+    return res.status(400).json({ error: 'name, email and password are required' });
+  }
 
   const key = redisKeyFor(email);
 
   try {
-    // If user exists in DB, clear any stale session and return conflict
     const existing = await prisma.user.findUnique({ where: { email } });
+    logger.debug('Checked for existing user during registration', { email, userExists: !!existing });
     if (existing) {
       await deleteSession(key);
+      logger.warn('Registration attempt with already used email', { email });
       return res.status(409).json({ error: 'Email already in use' });
     }
 
     const session = await readSession<RegistrationSession>(key);
+    logger.debug('Read registration session', { email, sessionExists: !!session });
     const newPasswordHash = await hashPassword(password);
 
     if (session) {
       // enforce cooldown and max resends
       if (session.attempts >= OTP_MAX_RESENDS) {
-        logger.warn('OTP resend limit reached', { email, attempts: session.attempts });
+        logger.warn('OTP resend limit reached during registration', { email, attempts: session.attempts });
         return res.status(429).json({ error: 'Too many OTP requests. Please contact support or try again later.' });
       }
 
       const secondsSinceLast = Math.floor((Date.now() - session.lastSent) / 1000);
       if (secondsSinceLast < OTP_RESEND_COOLDOWN_S) {
         const wait = OTP_RESEND_COOLDOWN_S - secondsSinceLast;
+        logger.warn('OTP resend cooldown active', { email, wait });
         return res.status(429).json({ error: `Please wait ${wait} seconds before requesting a new code.` });
       }
 
@@ -98,7 +117,7 @@ export const register = async (req: Request, res: Response) => {
       await saveSession(key, session);
       await sendVerificationEmail(email, session.otp);
 
-      logger.info('OTP resent', { email, attempts: session.attempts });
+      logger.info('OTP resent during registration', { email, attempts: session.attempts });
       return res.status(200).json({ message: 'Verification code resent. Please check your email.' });
     }
 
@@ -125,25 +144,37 @@ export const register = async (req: Request, res: Response) => {
 
 export const verifyEmail = async (req: Request, res: Response) => {
   const { email, otp } = req.body;
-  if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required' });
+  logger.debug('Verify email request received', { email });
+  if (!email || !otp) {
+    logger.warn('Verify email request missing email or OTP', { email });
+    return res.status(400).json({ error: 'Email and OTP are required' });
+  }
 
   const key = redisKeyFor(email);
 
   try {
     const session = await readSession<RegistrationSession>(key);
-    if (!session) return res.status(400).json({ error: 'Registration session expired or invalid' });
+    logger.debug('Read registration session for verification', { email, sessionExists: !!session });
+    if (!session) {
+      logger.warn('Verification session expired or invalid', { email });
+      return res.status(400).json({ error: 'Registration session expired or invalid' });
+    }
 
     const providedOtp = String(otp).trim();
-    if (session.otp !== providedOtp) return res.status(400).json({ error: 'Invalid OTP' });
+    logger.debug('Comparing provided OTP with session OTP', { email, providedOtp });
+    if (session.otp !== providedOtp) {
+      logger.warn('Invalid OTP provided during verification', { email });
+      return res.status(400).json({ error: 'Invalid OTP' });
+    }
 
-    // Double-check user does not already exist
     const exists = await prisma.user.findUnique({ where: { email } });
+    logger.debug('Checked if user already exists during verification', { email, userExists: !!exists });
     if (exists) {
       await deleteSession(key);
+      logger.warn('Email already in use during verification', { email });
       return res.status(409).json({ error: 'Email already in use' });
     }
 
-    // Create organization + user in a transaction, handle unique-constraint race
     try {
       const created = await prisma.$transaction(async (tx) => {
         const organization = await tx.organization.create({ data: { name: `${session.name}'s Organization` } });
@@ -156,17 +187,18 @@ export const verifyEmail = async (req: Request, res: Response) => {
             organizationId: organization.id,
           },
         });
+        logger.info('User and organization created successfully', { email, organizationId: organization.id, userId: user.id });
         return user;
       });
 
       await deleteSession(key);
+      logger.info('Verification session deleted after successful registration', { email });
 
       const { password: _p, ...safeUser } = created as any;
       return res.status(201).json({ message: 'Registration completed successfully', user: safeUser });
     } catch (err: any) {
-      // Prisma unique constraint error code (P2002)
       if (err && err.code === 'P2002') {
-        logger.warn('Race: email already created during verification', { email, err });
+        logger.warn('Unique constraint violation during verification', { email, error: err });
         await deleteSession(key);
         return res.status(409).json({ error: 'Email already in use' });
       }
@@ -180,21 +212,25 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
 export const requestPasswordReset = async (req: Request, res: Response) => {
   const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email is required' });
+  logger.debug('Password reset request received', { email });
+  if (!email) {
+    logger.warn('Password reset request missing email');
+    return res.status(400).json({ error: 'Email is required' });
+  }
 
   try {
-    // Check if user exists
     const user = await prisma.user.findUnique({ where: { email } });
+    logger.debug('Checked if user exists for password reset', { email, userExists: !!user });
     if (!user) {
-      // Don't reveal if email exists, just return success
+      logger.info('Password reset requested for non-existent email', { email });
       return res.status(200).json({ message: 'If your email exists in our system, you will receive reset instructions.' });
     }
 
     const key = resetKeyFor(email);
     const session = await readSession<PasswordResetSession>(key);
+    logger.debug('Read password reset session', { email, sessionExists: !!session });
 
     if (session) {
-      // enforce cooldown and max resends
       if (session.attempts >= OTP_MAX_RESENDS) {
         logger.warn('Password reset OTP limit reached', { email, attempts: session.attempts });
         return res.status(429).json({ error: 'Too many reset attempts. Please try again later.' });
@@ -203,10 +239,10 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
       const secondsSinceLast = Math.floor((Date.now() - session.lastSent) / 1000);
       if (secondsSinceLast < OTP_RESEND_COOLDOWN_S) {
         const wait = OTP_RESEND_COOLDOWN_S - secondsSinceLast;
+        logger.warn('Password reset OTP resend cooldown active', { email, wait });
         return res.status(429).json({ error: `Please wait ${wait} seconds before requesting a new code.` });
       }
 
-      // Update session with new OTP
       const updatedSession: PasswordResetSession = {
         ...session,
         otp: generateOTP(),
@@ -216,8 +252,8 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
 
       await saveSession(key, updatedSession, true);
       await sendPasswordResetEmail(email, updatedSession.otp);
+      logger.info('Password reset OTP resent', { email, attempts: updatedSession.attempts });
     } else {
-      // Create new reset session
       const newSession: PasswordResetSession = {
         email,
         otp: generateOTP(),
@@ -226,9 +262,10 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
       };
       await saveSession(key, newSession, true);
       await sendPasswordResetEmail(email, newSession.otp);
+      logger.info('New password reset session created', { email });
     }
-    logger.info('Password reset requested', { email });
 
+    logger.info('Password reset instructions sent', { email });
     return res.status(200).json({
       message: 'If your email exists in our system, you will receive reset instructions.',
     });
@@ -240,7 +277,9 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
 
 export const resetPassword = async (req: Request, res: Response) => {
   const { email, otp, newPassword } = req.body;
+  logger.debug('Reset password request received', { email });
   if (!email || !otp || !newPassword) {
+    logger.warn('Reset password request missing required fields', { email });
     return res.status(400).json({ error: 'Email, OTP, and new password are required' });
   }
 
@@ -248,25 +287,28 @@ export const resetPassword = async (req: Request, res: Response) => {
 
   try {
     const session = await readSession(key);
+    logger.debug('Read reset session for password reset', { email, sessionExists: !!session });
     if (!session) {
+      logger.warn('Reset session expired or invalid', { email });
       return res.status(400).json({ error: 'Reset session expired or invalid' });
     }
 
     const providedOtp = String(otp).trim();
+    logger.debug('Comparing provided OTP with session OTP for password reset', { email, providedOtp });
     if (session.otp !== providedOtp) {
+      logger.warn('Invalid OTP provided for password reset', { email });
       return res.status(400).json({ error: 'Invalid OTP' });
     }
 
-    // Hash new password and update user
     const passwordHash = await hashPassword(newPassword);
     await prisma.user.update({
       where: { email },
       data: { password: passwordHash },
     });
+    logger.info('User password updated successfully', { email });
 
-    // Clean up reset session
     await deleteSession(key);
-    logger.info('Password reset completed', { email });
+    logger.info('Reset session deleted after successful password reset', { email });
 
     return res.status(200).json({ message: 'Password has been reset successfully' });
   } catch (err) {
@@ -276,8 +318,8 @@ export const resetPassword = async (req: Request, res: Response) => {
 };
 
 export const getSelf = async (req: Request, res: Response) => {
+  logger.debug('Get self request received', { userId: req.user?.id });
   try {
-    // User is already authenticated via middleware, so req.user exists
     const user = await prisma.user.findUnique({
       where: { id: req.user?.id },
       select: {
@@ -291,21 +333,23 @@ export const getSelf = async (req: Request, res: Response) => {
           select: {
             id: true,
             name: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
+    logger.debug('Fetched user profile', { userId: req.user?.id, userExists: !!user });
     if (!user) {
       logger.error('Authenticated user not found in database', { userId: req.user?.id });
       return res.status(404).json({ error: 'User not found' });
     }
 
+    logger.info('User profile fetched successfully', { userId: req.user?.id });
     return res.status(200).json({
       status: 'success',
       data: {
-        user
-      }
+        user,
+      },
     });
   } catch (err) {
     logger.error('Error fetching user profile', { error: err instanceof Error ? err.stack : err });
