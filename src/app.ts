@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+// Load environment variables from .env file
+dotenv.config();
+
 import express, { Express, Request, Response, NextFunction } from 'express';
 import router from './routes/index';
 import logger from './lib/logger';
