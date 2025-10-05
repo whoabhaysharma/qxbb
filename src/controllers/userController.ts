@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
 import bcrypt from 'bcrypt';
+import { AuthUser } from '../types/auth';
 
 export const createUser = async (req: Request, res: Response) => {
   try {
@@ -122,5 +123,43 @@ export const deleteUser = async (req: Request<{ id: string }>, res: Response) =>
   } catch (error) {
     logger.error('Failed to delete user', { error });
     res.status(500).json({ error: 'Failed to delete user' });
+  }
+};
+
+export const getSelf = async (req: Request, res: Response) => {
+  try {
+    // User is already authenticated via middleware, so req.user exists
+    const user = await prisma.user.findUnique({
+      where: { id: req.user?.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      logger.error('Authenticated user not found in database', { userId: req.user?.id });
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        user
+      }
+    });
+  } catch (err) {
+    logger.error('Error fetching user profile', { error: err instanceof Error ? err.stack : err });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

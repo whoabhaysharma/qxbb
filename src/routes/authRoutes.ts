@@ -4,13 +4,11 @@ import { authLimiter } from '../middleware/security';
 
 const router = express.Router();
 
-// Apply auth rate limiter to all auth routes
-router.use(authLimiter);
-
-router.post('/login', login);
-router.post('/register', register);
-router.post('/verify-email', verifyEmail);
-router.post('/forgot-password', requestPasswordReset);
-router.post('/reset-password', resetPassword);
+// Apply auth rate limiter to auth mutation routes
+router.post('/login', authLimiter, login);
+router.post('/register', authLimiter, register);
+router.post('/verify-email', authLimiter, verifyEmail);
+router.post('/forgot-password', authLimiter, requestPasswordReset);
+router.post('/reset-password', authLimiter, resetPassword);
 
 export default router;
